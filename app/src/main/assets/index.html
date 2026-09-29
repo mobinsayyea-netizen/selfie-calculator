@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Selfie Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f0f0f0; }
+        .calculator { border: 1px solid #ccc; border-radius: 8px; padding: 10px; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .display { width: 100%; height: 60px; font-size: 2.5em; text-align: right; padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box; overflow: hidden; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .button { width: 100%; height: 60px; font-size: 1.8em; border: none; border-radius: 4px; cursor: pointer; background-color: #e0e0e0; transition: background-color 0.2s; }
+        .button:active { background-color: #ccc; }
+        .operator { background-color: #ff9500; color: white; }
+        .operator:active { background-color: #e08000; }
+        .equals { background-color: #007bff; color: white; grid-column: span 2; }
+        .equals:active { background-color: #0056b3; }
+        .clear { background-color: #dc3545; color: white; }
+        .clear:active { background-color: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="button clear" onclick="clearDisplay()">C</button>
+            <button class="button operator" onclick="appendOperator('/')">/</button>
+            <button class="button operator" onclick="appendOperator('*')">x</button>
+            <button class="button operator" onclick="appendOperator('-')">-</button>
+
+            <button class="button" onclick="appendDigit('7')">7</button>
+            <button class="button" onclick="appendDigit('8')">8</button>
+            <button class="button" onclick="appendDigit('9')">9</button>
+            <button class="button operator" onclick="appendOperator('+')">+</button>
+
+            <button class="button" onclick="appendDigit('4')">4</button>
+            <button class="button" onclick="appendDigit('5')">5</button>
+            <button class="button" onclick="appendDigit('6')">6</button>
+            <button class="button equals" onclick="calculate()">=</button>
+
+            <button class="button" onclick="appendDigit('1')">1</button>
+            <button class="button" onclick="appendDigit('2')">2</button>
+            <button class="button" onclick="appendDigit('3')">3</button>
+            <button class="button" onclick="appendDigit('0')">0</button>
+            <button class="button" onclick="appendDigit('.')">.</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        let currentInput = '0';
+        let operator = null;
+        let previousInput = null;
+        let result = null;
+
+        function updateDisplay() {
+            display.textContent = currentInput;
+            speak(currentInput);
+        }
+
+        function speak(text) {
+            if (typeof AndroidTTS !== 'undefined') {
+                AndroidTTS.speak(text, 1.0); // 1.0 is normal rate
+            } else {
+                console.log("AndroidTTS not available. Speaking: " + text);
+            }
+        }
+
+        function appendDigit(digit) {
+            if (currentInput === '0' && digit !== '.') {
+                currentInput = digit;
+            } else if (digit === '.' && currentInput.includes('.')) {
+                // Do nothing if decimal already exists
+            }
+            else {
+                currentInput += digit;
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (previousInput !== null && operator !== null) {
+                calculate(); // Calculate previous operation if exists
+            }
+            previousInput = parseFloat(currentInput);
+            operator = op;
+            currentInput = '0'; // Reset for next number
+            speak(op);
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            operator = null;
+            previousInput = null;
+            result = null;
+            updateDisplay();
+            speak("क्लियर");
+        }
+
+        function calculate() {
+            if (previousInput === null || operator === null) {
+                return;
+            }
+
+            const current = parseFloat(currentInput);
+            let calculationResult;
+
+            switch (operator) {
+                case '+':
+                    calculationResult = previousInput + current;
+                    break;
+                case '-':
+                    calculationResult = previousInput - current;
+                    break;
+                case '*':
+                    calculationResult = previousInput * current;
+                    break;
+                case '/':
+                    if (current === 0) {
+                        calculationResult = "Error: Division by zero";
+                        speak("शून्य से भाग नहीं दे सकते");
+                    } else {
+                        calculationResult = previousInput / current;
+                    }
+                    break;
+                default:
+                    return;
+            }
+
+            if (typeof calculationResult === 'number') {
+                currentInput = calculationResult.toString();
+                speak("परिणाम " + currentInput);
+            } else {
+                currentInput = calculationResult; // Error message
+            }
+
+            previousInput = null;
+            operator = null;
+            updateDisplay();
+        }
+
+        // Initial display update
+        updateDisplay();
+    </script>
+</body>
+</html>
